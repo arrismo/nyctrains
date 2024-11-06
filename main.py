@@ -9,19 +9,18 @@ from protobuf3_to_dict import protobuf_to_dict
 
 # Get MTA ACE Train Data
 # MTA train data is returned in a Protocol Buffer format (GTFS format)
-# response = requests.get("https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-ace")
-# feed = gtfs_realtime_pb2.FeedMessage()
-# feed.ParseFromString(response.content)
-# feed_dict = protobuf_to_dict(feed)
+response = requests.get("https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-ace")
+feed = gtfs_realtime_pb2.FeedMessage()
+feed.ParseFromString(response.content)
+feed_dict = protobuf_to_dict(feed)
 # #print(feed_dict)
-# dump_object = json.dumps(feed_dict, indent=4)
+dump_object = json.dumps(feed_dict, indent=4)
 # # Save out data to json file -- temporary 
 # with open('a-train-data.json','w') as f:
-#    with redirect_stdout(f):
+#    with redirect_stdout(f):`
 #       print(dump_object)
 
-import json
-import datetime
+
 import csv
 import pandas as pd
 
