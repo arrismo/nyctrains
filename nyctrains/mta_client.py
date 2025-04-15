@@ -1,7 +1,7 @@
 import os
 import httpx
 
-MTA_API_BASE = "[https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/](https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/)"
+MTA_API_BASE = "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/"
 
 class MTAClient:
     def __init__(self, api_key: str = None):
