@@ -5,7 +5,7 @@ MTA_API_BASE = "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/"
 
 class MTAClient:
     def __init__(self, api_key: str = None):
-        self.api_key = api_key or os.getenv("MTA_API_KEY")
+        self.api_key = os.getenv("MTA_API_KEY")
         if not self.api_key:
             raise ValueError("MTA_API_KEY must be set as an environment variable or provided explicitly.")
 

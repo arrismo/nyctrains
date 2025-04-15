@@ -1,12 +1,25 @@
-# nyctrains-dashboard
+# nyctrains 
 
-A FastAPI-based backend for working with the MTA's real-time subway GTFS-RT data feeds. This project fetches, parses, and exposes the ACE line's real-time feed as human-readable JSON.
+A FastAPI-based backend for working with the MTA's real-time subway and LIRR GTFS-RT data feeds. This project fetches, parses, and exposes real-time feeds as human-readable JSON, including stop names and (for LIRR) route names.
 
 ## Features
-- Proxies and parses the MTA GTFS-RT feed for the ACE subway line
+- Proxies and parses the MTA GTFS-RT feeds for all major subway lines and LIRR
 - Converts all Unix timestamps to ISO 8601 strings for easy reading
-- Provides a `/subway/ace/json` endpoint for full feed access
-- Ready for extension to other subway lines or custom endpoints
+- Adds `stop_name` (from stops.txt or stops-lirr.txt) alongside every `stop_id`
+- For LIRR, adds `route_long_name` (from routes-lirr.txt) alongside every `route_id`
+- Unified endpoint: `/subway/{feed}/json` (see below for all supported feeds)
+- Ready for extension to other lines or custom endpoints
+
+## Supported Feeds
+- `ace` (A, C, E)
+- `bdfm` (B, D, F, M)
+- `g` (G)
+- `jz` (J, Z)
+- `nqrw` (N, Q, R, W)
+- `l` (L)
+- `si` (Staten Island Railway)
+- `1234567` (1, 2, 3, 4, 5, 6, 7, S)
+- `lirr` (Long Island Rail Road)
 
 ## Quickstart
 
@@ -23,11 +36,8 @@ pip install -r requirements.txt
 uv pip install -r requirements.txt
 ```
 
-### 3. Set up your MTA API key
-Create a `.env` file in the project root:
-```
-MTA_API_KEY=your-mta-api-key-here
-```
+### 3. (No API key or .env file required)
+You do **not** need an API key or a `.env` file to use this project. All feeds are public.
 
 ### 4. Run the FastAPI server
 ```bash
@@ -36,24 +46,32 @@ uvicorn nyctrains.main:app --reload
 
 ### 5. Access the API
 - Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
-- Human-readable JSON: [http://localhost:8000/subway/ace/json](http://localhost:8000/subway/ace/json)
+- Example: [http://localhost:8000/subway/ace/json](http://localhost:8000/subway/ace/json)
+- Example: [http://localhost:8000/subway/lirr/json](http://localhost:8000/subway/lirr/json)
 
 ## Example Output
 ```json
 {
   "header": {
-    "gtfs_realtime_version": "1.0",
-    "timestamp": "2025-04-15T19:19:46+00:00"
+    "gtfs_realtime_version": "2.0",
+    "timestamp": "2025-04-15T21:04:02+00:00"
   },
   "entity": [
     {
-      "id": "000001A",
+      "id": "GO304_25_809_T",
       "trip_update": {
-        "trip": { ... },
+        "trip": {
+          "trip_id": "GO304_25_809",
+          "start_date": "20250415",
+          "schedule_relationship": 0,
+          "route_id": "6",
+          "route_long_name": "Long Beach Branch",
+          "direction_id": 1
+        },
         "stop_time_update": [
           {
-            "arrival": { "time": "2025-04-15T19:19:37+00:00" },
-            ...
+            "stop_id": "LBG",
+            "stop_name": "Long Beach"
           }
         ]
       }
@@ -61,6 +79,14 @@ uvicorn nyctrains.main:app --reload
   ]
 }
 ```
+
+## Data Resources
+- All static mapping files are in the `resources/` directory:
+  - `resources/stops.txt` (NYC Subway stops)
+  - `resources/stops-lirr.txt` (LIRR stops)
+  - `resources/routes-lirr.txt` (LIRR route names)
+
+**Note:** If you deploy or share this repo, make sure these files are present on your server even if they are gitignored.
 
 ## Development
 - All main code is in the `nyctrains/` package.
