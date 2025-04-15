@@ -7,9 +7,9 @@ requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.115.12",
     "gtfs-realtime-bindings>=1.0.0",
+    "httpx>=0.28.1",
     "protobuf>=6.30.2",
-    "protobuf-to-dict>=0.1.0",
-    "protobuf3-to-dict>=0.1.5",
+    "yc-protobuf3-to-dict>=0.3.0",
     "pydantic>=2.11.3",
     "python-dotenv>=1.1.0",
     "requests>=2.32.3",
