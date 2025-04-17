@@ -47,6 +47,48 @@ data = asyncio.run(client.get_gtfs_feed(feed_path))
 print(f"Feed data length: {len(data)} bytes")
 ```
 
+### Example: Visualizing Subway Feed Data
+
+You can use `matplotlib` and `pandas` to visualize GTFS-RT feed data. Below is a simple example that counts and plots the number of train trip updates in a feed:
+
+```python
+import asyncio
+import pandas as pd
+import matplotlib.pyplot as plt
+from nyctrains.mta_client import MTAClient
+from google.transit import gtfs_realtime_pb2
+from protobuf3_to_dict import protobuf_to_dict, dict_to_protobuf
+
+client = MTAClient()
+feed_path = "nyct%2Fgtfs-ace"
+
+def parse_trip_updates(feed_bytes):
+    feed = gtfs_realtime_pb2.FeedMessage()
+    feed.ParseFromString(feed_bytes)
+    feed_dict = protobuf_to_dict(feed)
+    trip_updates = [e for e in feed_dict['entity'] if 'trip_update' in e]
+    return trip_updates
+
+# Fetch and parse feed
+data = asyncio.run(client.get_gtfs_feed(feed_path))
+trip_updates = parse_trip_updates(data)
+
+# Convert to DataFrame for analysis
+trip_ids = [tu['trip_update']['trip']['trip_id'] for tu in trip_updates]
+df = pd.DataFrame({"trip_id": trip_ids})
+
+# Plot number of unique trips
+plt.figure(figsize=(8, 4))
+df["trip_id"].value_counts().plot(kind="bar")
+plt.title("Number of Trip Updates per Trip ID")
+plt.xlabel("Trip ID")
+plt.ylabel("Update Count")
+plt.tight_layout()
+plt.show()
+```
+
+**Note:** You can adapt this example to visualize arrival times, delays, or other GTFS-RT data fields using pandas and matplotlib/seaborn.
+
 ## Quickstart (as an API)
 
 ### 1. Clone the repository

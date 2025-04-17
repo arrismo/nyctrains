@@ -1,6 +1,6 @@
 [project]
 name = "nyctrains"
-version = "1.2.0"
+version = "1.4.0"
 description = "Python tools and FastAPI backend for MTA GTFS-RT subway and LIRR data"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -15,6 +15,11 @@ dependencies = [
     "uvicorn",
     "protobuf",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/arrismo/nyctrains"
+"Repository" = "https://github.com/arrismo/nyctrains"
+"Bug Tracker" = "https://github.com/arrismo/nyctrains/issues"
 
 [build-system]
 requires = ["setuptools", "wheel"]
