@@ -1,6 +1,6 @@
-# nyctrains 
+# nyctrains API
 
-A FastAPI-based backend for working with the MTA's real-time subway and LIRR GTFS-RT data feeds. This project fetches, parses, and exposes real-time feeds as human-readable JSON, including stop names and (for LIRR) route names.
+A FastAPI-based backend and Python package for working with the MTA's real-time subway and LIRR GTFS-RT data feeds. This project fetches, parses, and exposes real-time feeds as human-readable JSON, including stop names and (for LIRR) route names. You can use it as an HTTP API or as a Python library in your own projects.
 
 ## Features
 - Proxies and parses the MTA GTFS-RT feeds for all major subway lines and LIRR
@@ -9,6 +9,7 @@ A FastAPI-based backend for working with the MTA's real-time subway and LIRR GTF
 - For LIRR, adds `route_long_name` (from routes-lirr.txt) alongside every `route_id`
 - Unified endpoint: `/subway/{feed}/json` (see below for all supported feeds)
 - Ready for extension to other lines or custom endpoints
+- **Usable as a Python package:** import and use MTAClient or other utilities in your own code
 
 ## Supported Feeds
 - `ace` (A, C, E)
@@ -21,7 +22,7 @@ A FastAPI-based backend for working with the MTA's real-time subway and LIRR GTF
 - `1234567` (1, 2, 3, 4, 5, 6, 7, S)
 - `lirr` (Long Island Rail Road)
 
-## Quickstart
+## Quickstart (as an API)
 
 ### 1. Clone the repository
 ```bash
@@ -32,8 +33,8 @@ cd nyctrains
 ### 2. Install dependencies
 ```bash
 pip install -r requirements.txt
-# or if using uv/pyproject.toml:
-uv pip install -r requirements.txt
+# or, if you want to use as a package:
+pip install .
 ```
 
 ### 3. (No API key or .env file required)
@@ -48,6 +49,27 @@ uvicorn nyctrains.main:app --reload
 - Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
 - Example: [http://localhost:8000/subway/ace/json](http://localhost:8000/subway/ace/json)
 - Example: [http://localhost:8000/subway/lirr/json](http://localhost:8000/subway/lirr/json)
+
+## Usage as a Python Library
+Install in your project:
+```bash
+pip install git+https://github.com/arrismo/nyctrains.git
+```
+
+Example usage:
+```python
+from nyctrains.mta_client import MTAClient
+import asyncio
+
+async def main():
+    client = MTAClient()
+    data = await client.get_gtfs_feed("nyct%2Fgtfs-ace")
+    # process GTFS-RT data as needed
+
+asyncio.run(main())
+```
+
+You can also import and use any utility functions/classes you expose in your package.
 
 ## Example Output
 ```json

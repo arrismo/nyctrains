@@ -2,3 +2,5 @@
 __pycache__/
 *.pyc
 api-resources/
+dist/
+*.egg-info/
