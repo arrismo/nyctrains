@@ -1,6 +1,6 @@
 [project]
 name = "nyctrains"
-version = "1.1.0"
+version = "1.2.0"
 description = "Python tools and FastAPI backend for MTA GTFS-RT subway and LIRR data"
 readme = "README.md"
 requires-python = ">=3.10"

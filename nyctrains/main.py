@@ -25,7 +25,7 @@ FEEDS = {
 
 # Load stop_id -> stop_name mapping at startup for subway and LIRR
 STOP_ID_TO_NAME_SUBWAY = {}
-with open(os.path.join(os.path.dirname(__file__), '..', 'stops.txt'), encoding='utf-8') as f:
+with open(os.path.join(os.path.dirname(__file__), '..', 'resources', 'stops.txt'), encoding='utf-8') as f:
     reader = csv.DictReader(f)
     for row in reader:
         STOP_ID_TO_NAME_SUBWAY[row['stop_id']] = row['stop_name']

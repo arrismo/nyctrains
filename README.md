@@ -22,6 +22,31 @@ A FastAPI-based backend and Python package for working with the MTA's real-time 
 - `1234567` (1, 2, 3, 4, 5, 6, 7, S)
 - `lirr` (Long Island Rail Road)
 
+## Installation
+
+Install using pip:
+
+```sh
+pip install nyctrains
+```
+
+## Usage
+
+This package provides Python tools and a FastAPI backend for working with MTA GTFS-RT subway and LIRR data. **No API key is required** to use the package or access the feeds.
+
+### Example: Fetching a GTFS Feed
+
+```python
+from nyctrains.mta_client import MTAClient
+import asyncio
+
+client = MTAClient()
+feed_path = "nyct%2Fgtfs-ace"  # Example feed
+
+data = asyncio.run(client.get_gtfs_feed(feed_path))
+print(f"Feed data length: {len(data)} bytes")
+```
+
 ## Quickstart (as an API)
 
 ### 1. Clone the repository
@@ -37,39 +62,15 @@ pip install -r requirements.txt
 pip install .
 ```
 
-### 3. (No API key or .env file required)
-You do **not** need an API key or a `.env` file to use this project. All feeds are public.
-
-### 4. Run the FastAPI server
+### 3. Run the FastAPI server
 ```bash
 uvicorn nyctrains.main:app --reload
 ```
 
-### 5. Access the API
+### 4. Access the API
 - Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
 - Example: [http://localhost:8000/subway/ace/json](http://localhost:8000/subway/ace/json)
 - Example: [http://localhost:8000/subway/lirr/json](http://localhost:8000/subway/lirr/json)
-
-## Usage as a Python Library
-Install in your project:
-```bash
-pip install git+https://github.com/arrismo/nyctrains.git
-```
-
-Example usage:
-```python
-from nyctrains.mta_client import MTAClient
-import asyncio
-
-async def main():
-    client = MTAClient()
-    data = await client.get_gtfs_feed("nyct%2Fgtfs-ace")
-    # process GTFS-RT data as needed
-
-asyncio.run(main())
-```
-
-You can also import and use any utility functions/classes you expose in your package.
 
 ## Example Output
 ```json
