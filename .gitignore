@@ -4,3 +4,4 @@ __pycache__/
 api-resources/
 dist/
 *.egg-info/
+node_modules/
