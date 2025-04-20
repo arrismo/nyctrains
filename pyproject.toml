@@ -1,9 +1,10 @@
 [project]
 name = "nyctrains"
-version = "1.4.0"
 description = "Python tools and FastAPI backend for MTA GTFS-RT subway and LIRR data"
 readme = "README.md"
 requires-python = ">=3.10"
+authors = [{ name = "Mikael Moise", email = "mikaelmoise00@gmail.com" }]
+dynamic = ["version"]
 dependencies = [
     "fastapi",
     "gtfs-realtime-bindings",
@@ -14,13 +15,33 @@ dependencies = [
     "requests",
     "uvicorn",
     "protobuf",
-    "pytest>=8.3.5",
 ]
-
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+]
+keywords = [
+    "data",
+    "trains",
+    "data science",
+    "data engineering",
+    "api"
+]
 [project.urls]
-"Homepage" = "https://github.com/arrismo/nyctrains"
 "Repository" = "https://github.com/arrismo/nyctrains"
 "Bug Tracker" = "https://github.com/arrismo/nyctrains/issues"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.3.5"
+]
 
 [build-system]
 requires = ["setuptools", "wheel"]
