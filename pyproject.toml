@@ -40,7 +40,8 @@ keywords = [
 
 [project.optional-dependencies]
 test = [
-    "pytest>=8.3.5"
+    "pytest>=8.3.5",
+    "pytest-cov"
 ]
 
 [build-system]
