@@ -33,6 +33,8 @@ jobs:
         run: pipx install uv
       - name: Install dependencies with uv
         run: uv sync
+      - name: Install test dependencies
+        run: uv pip install .[test]
       - name: Run tests with uv
         run: uv run pytest -v
       - name: Upload coverage reports to Codecov
