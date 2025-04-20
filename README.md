@@ -1,5 +1,5 @@
 # nyctrains API
-[![Python Versions](https://img.shields.io/pypi/pyversions/nyctrains.svg)](https://pypi.python.org/pypi/nyctrains)
+
 [![PyPI](https://img.shields.io/pypi/v/nyctrains)](https://pypi.org/project/nyctrains/#history)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/nyctrains)](https://pypistats.org/packages/nyctrains)
 
