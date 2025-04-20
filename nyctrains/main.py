@@ -27,6 +27,9 @@ FEEDS = {
 STOP_ID_TO_NAME_SUBWAY = {}
 with open(os.path.join(os.path.dirname(__file__), '..', 'resources', 'stops.txt'), encoding='utf-8') as f:
     reader = csv.DictReader(f)
+    expected_columns = {'stop_id', 'stop_name'}
+    if not expected_columns.issubset(reader.fieldnames):
+        raise ValueError(f"Missing columns in stops.txt: required {expected_columns}, found {reader.fieldnames}")
     for row in reader:
         STOP_ID_TO_NAME_SUBWAY[row['stop_id']] = row['stop_name']
 
@@ -35,6 +38,9 @@ lirr_path = os.path.join(os.path.dirname(__file__), '..', 'stops-lirr.txt')
 if os.path.exists(lirr_path):
     with open(lirr_path, encoding='utf-8') as f:
         reader = csv.DictReader(f)
+        expected_columns = {'stop_id', 'stop_name'}
+        if not expected_columns.issubset(reader.fieldnames):
+            raise ValueError(f"Missing columns in stops-lirr.txt: required {expected_columns}, found {reader.fieldnames}")
         for row in reader:
             STOP_ID_TO_NAME_LIRR[row['stop_id']] = row['stop_name']
 
@@ -44,6 +50,9 @@ routes_lirr_path = os.path.join(os.path.dirname(__file__), '..', 'routes-lirr.tx
 if os.path.exists(routes_lirr_path):
     with open(routes_lirr_path, encoding='utf-8') as f:
         reader = csv.DictReader(f)
+        expected_columns = {'route_id', 'route_long_name'}
+        if not expected_columns.issubset(reader.fieldnames):
+            raise ValueError(f"Missing columns in routes-lirr.txt: required {expected_columns}, found {reader.fieldnames}")
         for row in reader:
             ROUTE_ID_TO_LONG_NAME_LIRR[row['route_id']] = row['route_long_name']
 
