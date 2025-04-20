@@ -2,6 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/nyctrains)](https://pypi.org/project/nyctrains/#history)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/nyctrains)](https://pypistats.org/packages/nyctrains)
+[![Repo Status](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
 A FastAPI-based backend and Python package for working with the MTA's real-time subway and LIRR GTFS-RT data feeds. This project fetches, parses, and exposes real-time feeds as human-readable JSON, including stop names and (for LIRR) route names. You can use it as an HTTP API or as a Python library in your own projects.
 
