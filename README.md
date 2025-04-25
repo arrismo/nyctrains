@@ -92,34 +92,6 @@ plt.ylabel("Update Count")
 plt.tight_layout()
 plt.show()
 ```
-
-**Note:** You can adapt this example to visualize arrival times, delays, or other GTFS-RT data fields using pandas and matplotlib/seaborn.
-
-## Quickstart (as an API)
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/arrismo/nyctrains.git
-cd nyctrains
-```
-
-### 2. Install dependencies
-```bash
-pip install -r requirements.txt
-# or, if you want to use as a package:
-pip install .
-```
-
-### 3. Run the FastAPI server
-```bash
-uvicorn nyctrains.main:app --reload
-```
-
-### 4. Access the API
-- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
-- Example: [http://localhost:8000/subway/ace/json](http://localhost:8000/subway/ace/json)
-- Example: [http://localhost:8000/subway/lirr/json](http://localhost:8000/subway/lirr/json)
-
 ## Example Output
 ```json
 {
@@ -156,10 +128,3 @@ uvicorn nyctrains.main:app --reload
   - `resources/stops.txt` (NYC Subway stops)
   - `resources/stops-lirr.txt` (LIRR stops)
   - `resources/routes-lirr.txt` (LIRR route names)
-
-**Note:** If you deploy or share this repo, make sure these files are present on your server even if they are gitignored.
-
-## Development
-- All main code is in the `nyctrains/` package.
-- See `main.py` for API endpoints and `mta_client.py` for MTA API access logic.
-- Extend or customize endpoints as needed!

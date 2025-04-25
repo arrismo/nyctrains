@@ -1,12 +1,15 @@
 from dotenv import load_dotenv
 load_dotenv()
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Depends
 from .mta_client import MTAClient
-import os
 from google.transit import gtfs_realtime_pb2
-from protobuf3_to_dict import protobuf_to_dict, dict_to_protobuf
+from protobuf3_to_dict import protobuf_to_dict
 from datetime import datetime, timezone
-import csv
+from .data_loader import (
+    load_subway_stops_mapping,
+    load_lirr_stops_mapping,
+    load_lirr_routes_mapping,
+)
 
 app = FastAPI()
 
@@ -23,38 +26,25 @@ FEEDS = {
     "lirr": "lirr%2Fgtfs-lirr"
 }
 
-# Load stop_id -> stop_name mapping at startup for subway and LIRR
-STOP_ID_TO_NAME_SUBWAY = {}
-with open(os.path.join(os.path.dirname(__file__), '..', 'resources', 'stops.txt'), encoding='utf-8') as f:
-    reader = csv.DictReader(f)
-    expected_columns = {'stop_id', 'stop_name'}
-    if not expected_columns.issubset(reader.fieldnames):
-        raise ValueError(f"Missing columns in stops.txt: required {expected_columns}, found {reader.fieldnames}")
-    for row in reader:
-        STOP_ID_TO_NAME_SUBWAY[row['stop_id']] = row['stop_name']
+# Load data (Option 1: Load at startup - simple, but errors halt startup)
+try:
+    STOP_ID_TO_NAME_SUBWAY = load_subway_stops_mapping()
+    STOP_ID_TO_NAME_LIRR = load_lirr_stops_mapping()
+    ROUTE_ID_TO_LONG_NAME_LIRR = load_lirr_routes_mapping()
+except (FileNotFoundError, ValueError) as e:
+    # Handle critical loading errors, e.g., log and exit or raise
+    print(f"CRITICAL ERROR: Failed to load essential data: {e}")
+    # Depending on requirements, you might want to exit the app here
+    # import sys
+    # sys.exit(1)
+    # Or re-raise to prevent app start
+    raise RuntimeError(f"Failed to initialize data: {e}") from e
 
-STOP_ID_TO_NAME_LIRR = {}
-lirr_path = os.path.join(os.path.dirname(__file__), '..', 'stops-lirr.txt')
-if os.path.exists(lirr_path):
-    with open(lirr_path, encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        expected_columns = {'stop_id', 'stop_name'}
-        if not expected_columns.issubset(reader.fieldnames):
-            raise ValueError(f"Missing columns in stops-lirr.txt: required {expected_columns}, found {reader.fieldnames}")
-        for row in reader:
-            STOP_ID_TO_NAME_LIRR[row['stop_id']] = row['stop_name']
-
-# Load LIRR route_id -> route_long_name mapping
-ROUTE_ID_TO_LONG_NAME_LIRR = {}
-routes_lirr_path = os.path.join(os.path.dirname(__file__), '..', 'routes-lirr.txt')
-if os.path.exists(routes_lirr_path):
-    with open(routes_lirr_path, encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        expected_columns = {'route_id', 'route_long_name'}
-        if not expected_columns.issubset(reader.fieldnames):
-            raise ValueError(f"Missing columns in routes-lirr.txt: required {expected_columns}, found {reader.fieldnames}")
-        for row in reader:
-            ROUTE_ID_TO_LONG_NAME_LIRR[row['route_id']] = row['route_long_name']
+# --- Dependency Injection for MTA Client (Recommended) ---
+async def get_mta_client():
+    # If MTAClient needed config (like API key), it would go here
+    return MTAClient()
+# --- End Dependency Injection ---
 
 def convert_times(obj, stop_mapping, route_mapping=None):
     if isinstance(obj, dict):
@@ -77,19 +67,25 @@ def convert_times(obj, stop_mapping, route_mapping=None):
         return obj
 
 @app.get("/subway/{feed}/json")
-async def get_feed_json(feed: str):
+async def get_feed_json(feed: str, mta: MTAClient = Depends(get_mta_client)):
     if feed not in FEEDS:
         raise HTTPException(status_code=404, detail="Feed not found")
     try:
-        mta = MTAClient()
         data = await mta.get_gtfs_feed(FEEDS[feed])
         feed_obj = gtfs_realtime_pb2.FeedMessage()
         feed_obj.ParseFromString(data)
         feed_dict = protobuf_to_dict(feed_obj)
-        if feed == "lirr":
-            feed_dict = convert_times(feed_dict, STOP_ID_TO_NAME_LIRR, ROUTE_ID_TO_LONG_NAME_LIRR)
-        else:
-            feed_dict = convert_times(feed_dict, STOP_ID_TO_NAME_SUBWAY)
-        return feed_dict
+
+        # Determine which mappings to use
+        stop_mapping = STOP_ID_TO_NAME_LIRR if feed == "lirr" else STOP_ID_TO_NAME_SUBWAY
+        route_mapping = ROUTE_ID_TO_LONG_NAME_LIRR if feed == "lirr" else None
+
+        processed_dict = convert_times(feed_dict, stop_mapping, route_mapping)
+        return processed_dict
+    except HTTPException: # Don't catch HTTPExceptions raised intentionally
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Log the exception details for debugging
+        print(f"Unhandled exception in get_feed_json for feed '{feed}': {e}")
+        # Consider logging traceback: import traceback; traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"An internal error occurred: {e}")
