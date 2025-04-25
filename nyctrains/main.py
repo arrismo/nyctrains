@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
-from fastapi import FastAPI, HTTPException, Response, Depends
+from fastapi import FastAPI, HTTPException, Response, Depends, Request
+from contextlib import asynccontextmanager
 from .mta_client import MTAClient
 from google.transit import gtfs_realtime_pb2
 from protobuf3_to_dict import protobuf_to_dict
@@ -11,7 +12,31 @@ from .data_loader import (
     load_lirr_routes_mapping,
 )
 
-app = FastAPI()
+# Define data loading within lifespan context manager
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load data at startup
+    print("Loading data...") # Optional: for confirmation
+    try:
+        stop_id_to_name_subway = load_subway_stops_mapping()
+        stop_id_to_name_lirr = load_lirr_stops_mapping()
+        route_id_to_long_name_lirr = load_lirr_routes_mapping()
+        # Store data in app state
+        app.state.STOP_ID_TO_NAME_SUBWAY = stop_id_to_name_subway
+        app.state.STOP_ID_TO_NAME_LIRR = stop_id_to_name_lirr
+        app.state.ROUTE_ID_TO_LONG_NAME_LIRR = route_id_to_long_name_lirr
+        print("Data loaded successfully.")
+    except (FileNotFoundError, ValueError) as e:
+        # Log critical error and raise to prevent app start
+        print(f"CRITICAL ERROR: Failed to load essential data: {e}")
+        # Raise the original error or a specific startup error
+        raise RuntimeError(f"Failed to initialize data: {e}") from e
+    yield
+    # Clean up resources if needed on shutdown (optional)
+    print("Application shutting down.")
+
+# Pass lifespan to FastAPI app
+app = FastAPI(lifespan=lifespan)
 
 # Feed mapping for all major MTA subway and LIRR feeds
 FEEDS = {
@@ -25,20 +50,6 @@ FEEDS = {
     "1234567": "nyct%2Fgtfs",
     "lirr": "lirr%2Fgtfs-lirr"
 }
-
-# Load data (Option 1: Load at startup - simple, but errors halt startup)
-try:
-    STOP_ID_TO_NAME_SUBWAY = load_subway_stops_mapping()
-    STOP_ID_TO_NAME_LIRR = load_lirr_stops_mapping()
-    ROUTE_ID_TO_LONG_NAME_LIRR = load_lirr_routes_mapping()
-except (FileNotFoundError, ValueError) as e:
-    # Handle critical loading errors, e.g., log and exit or raise
-    print(f"CRITICAL ERROR: Failed to load essential data: {e}")
-    # Depending on requirements, you might want to exit the app here
-    # import sys
-    # sys.exit(1)
-    # Or re-raise to prevent app start
-    raise RuntimeError(f"Failed to initialize data: {e}") from e
 
 # --- Dependency Injection for MTA Client (Recommended) ---
 async def get_mta_client():
@@ -67,7 +78,7 @@ def convert_times(obj, stop_mapping, route_mapping=None):
         return obj
 
 @app.get("/subway/{feed}/json")
-async def get_feed_json(feed: str, mta: MTAClient = Depends(get_mta_client)):
+async def get_feed_json(feed: str, request: Request, mta: MTAClient = Depends(get_mta_client)):
     if feed not in FEEDS:
         raise HTTPException(status_code=404, detail="Feed not found")
     try:
@@ -76,9 +87,9 @@ async def get_feed_json(feed: str, mta: MTAClient = Depends(get_mta_client)):
         feed_obj.ParseFromString(data)
         feed_dict = protobuf_to_dict(feed_obj)
 
-        # Determine which mappings to use
-        stop_mapping = STOP_ID_TO_NAME_LIRR if feed == "lirr" else STOP_ID_TO_NAME_SUBWAY
-        route_mapping = ROUTE_ID_TO_LONG_NAME_LIRR if feed == "lirr" else None
+        # Determine which mappings to use (retrieve from app.state)
+        stop_mapping = request.app.state.STOP_ID_TO_NAME_LIRR if feed == "lirr" else request.app.state.STOP_ID_TO_NAME_SUBWAY
+        route_mapping = request.app.state.ROUTE_ID_TO_LONG_NAME_LIRR if feed == "lirr" else None
 
         processed_dict = convert_times(feed_dict, stop_mapping, route_mapping)
         return processed_dict

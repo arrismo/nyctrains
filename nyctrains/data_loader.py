@@ -41,10 +41,6 @@ def _load_csv_mapping(
     except ValueError as ve:
         # Allow the specific ValueError for missing columns to propagate directly
         raise ve
-    except FileNotFoundError:
-        # This case is actually handled before the try block, but included for completeness
-        # Should not be reached if logic above is correct
-        raise
     except Exception as e:
         # Catch other *unexpected* errors during file opening or processing
         print(f"Error processing {filename}: {e}")
