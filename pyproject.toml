@@ -4,7 +4,7 @@ description = "Python tools and FastAPI backend for MTA GTFS-RT subway and LIRR 
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Mikael Moise", email = "mikaelmoise00@gmail.com" }]
-dynamic = ["version"]
+version = "1.5.0"
 dependencies = [
     "fastapi",
     "gtfs-realtime-bindings",
@@ -48,16 +48,10 @@ test = [
 ]
 
 [build-system]
-requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["nyctrains*"]
-
-# Explicitly configure setuptools_scm (often defaults are fine, but helps debugging)
-[tool.setuptools_scm]
-# version_scheme = "guess-next-dev"
-# local_scheme = "node-and-date"
-write_to = "nyctrains/_version.py" # Optional: writes version to a file
 
 # Add coverage configuration
 [tool.coverage.run]
