@@ -48,10 +48,16 @@ test = [
 ]
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["nyctrains*"]
+
+# Explicitly configure setuptools_scm (often defaults are fine, but helps debugging)
+[tool.setuptools_scm]
+# version_scheme = "guess-next-dev"
+# local_scheme = "node-and-date"
+write_to = "nyctrains/_version.py" # Optional: writes version to a file
 
 # Add coverage configuration
 [tool.coverage.run]
