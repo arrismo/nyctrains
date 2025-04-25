@@ -27,9 +27,25 @@ def override_mta_dependency(mock_mta_client):
 # --- Fixture for TestClient ---
 @pytest.fixture
 def client(override_mta_dependency): # Apply MTA mock by default to client
-    # This client will now initialize the app, running lifespan events
-    with TestClient(app) as c:
-        yield c
+    # Prevent actual static file loading during API tests by patching loaders
+    # Use nested context managers for clarity and compatibility
+    with patch('nyctrains.static_gtfs.get_stops', return_value=None):
+        with patch('nyctrains.static_gtfs.get_routes', return_value=None):
+            with patch('nyctrains.static_gtfs.get_trips', return_value=None):
+                with patch('nyctrains.static_gtfs.get_stop_times', return_value=None):
+
+                    # This client will now initialize the app, running lifespan events,
+                    # but the static loaders will return None instead of hitting the disk.
+                    with TestClient(app) as c:
+                        # Ensure minimal mapping data is present for existing tests
+                        # (Loaded before static data in the real lifespan)
+                        if not hasattr(c.app.state, 'STOP_ID_TO_NAME_SUBWAY'):
+                             c.app.state.STOP_ID_TO_NAME_SUBWAY = {"S1": "Stop 1"}
+                        if not hasattr(c.app.state, 'STOP_ID_TO_NAME_LIRR'):
+                             c.app.state.STOP_ID_TO_NAME_LIRR = {"L1": "LIRR 1"}
+                        if not hasattr(c.app.state, 'ROUTE_ID_TO_LONG_NAME_LIRR'):
+                             c.app.state.ROUTE_ID_TO_LONG_NAME_LIRR = {"R1": "Route 1"}
+                        yield c
 # --- End Fixtures ---
 
 # === Test Startup ===
@@ -39,7 +55,7 @@ def test_startup_data_load_failure():
     # Mock the data loader function to raise an error *before* TestClient starts
     with patch('nyctrains.main.load_subway_stops_mapping', side_effect=FileNotFoundError(error_message)):
         # Expect RuntimeError when TestClient tries to start the app (lifespan)
-        with pytest.raises(RuntimeError, match=f"Failed to initialize data: {error_message}"):
+        with pytest.raises(RuntimeError, match=f"Failed to initialize mapping data: {error_message}"):
             with TestClient(app) as c: # Initialize client within the test
                 pass # Client initialization triggers startup
 

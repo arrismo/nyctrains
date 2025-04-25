@@ -15,6 +15,7 @@ dependencies = [
     "requests",
     "uvicorn",
     "protobuf",
+    "pandas",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -51,3 +52,24 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 include = ["nyctrains*"]
+
+# Add coverage configuration
+[tool.coverage.run]
+source = ["nyctrains"]
+omit = [
+    "nyctrains/models.py", # Exclude model definitions
+    "*/__main__.py", # Standard exclusion
+]
+
+[tool.coverage.report]
+# Fail if coverage drops below 100%
+# fail_under = 100 
+exclude_lines = [
+    "pragma: no cover", # Standard pragma
+    "raise NotImplementedError", # Don't require tests for abstract methods
+    "if __name__ == .__main__.:", # Standard main block exclusion
+    "if TYPE_CHECKING:", # Don't require test for type checking blocks
+    '\.\.\.', # Ignore ellipsis lines (using single quotes)
+    "pass", # Ignore simple pass statements if necessary
+    'print\(.*\)' # Optionally ignore all print statements (using single quotes)
+]

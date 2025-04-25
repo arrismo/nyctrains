@@ -11,29 +11,51 @@ from .data_loader import (
     load_lirr_stops_mapping,
     load_lirr_routes_mapping,
 )
+# Import static GTFS loading functions
+from . import static_gtfs
 
 # Define data loading within lifespan context manager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load data at startup
-    print("Loading data...") # Optional: for confirmation
+    print("Loading mapping data...") # pragma: no cover
     try:
         stop_id_to_name_subway = load_subway_stops_mapping()
         stop_id_to_name_lirr = load_lirr_stops_mapping()
         route_id_to_long_name_lirr = load_lirr_routes_mapping()
-        # Store data in app state
+        # Store mapping data in app state
         app.state.STOP_ID_TO_NAME_SUBWAY = stop_id_to_name_subway
         app.state.STOP_ID_TO_NAME_LIRR = stop_id_to_name_lirr
         app.state.ROUTE_ID_TO_LONG_NAME_LIRR = route_id_to_long_name_lirr
-        print("Data loaded successfully.")
+        print("Mapping data loaded successfully.") # pragma: no cover
     except (FileNotFoundError, ValueError) as e:
-        # Log critical error and raise to prevent app start
-        print(f"CRITICAL ERROR: Failed to load essential data: {e}")
-        # Raise the original error or a specific startup error
-        raise RuntimeError(f"Failed to initialize data: {e}") from e
+        print(f"CRITICAL ERROR: Failed to load essential mapping data: {e}") # pragma: no cover
+        raise RuntimeError(f"Failed to initialize mapping data: {e}") from e
+
+    # Load static GTFS dataframes
+    print("Loading static GTFS data...") # pragma: no cover
+    try:
+        app.state.stops_df = static_gtfs.get_stops()
+        app.state.routes_df = static_gtfs.get_routes()
+        app.state.trips_df = static_gtfs.get_trips()
+        app.state.stop_times_df = static_gtfs.get_stop_times()
+        # Add more processing here if needed, e.g., setting indexes
+        if app.state.stops_df is not None:
+            app.state.stops_df.set_index('stop_id', inplace=True)
+        if app.state.routes_df is not None:
+            app.state.routes_df.set_index('route_id', inplace=True)
+        # etc.
+        print("Static GTFS data loaded successfully.") # pragma: no cover
+    except (FileNotFoundError, ValueError) as e:
+        print(f"CRITICAL ERROR: Failed to load essential static GTFS data: {e}") # pragma: no cover
+        # If static GTFS is critical, raise error to stop startup
+        raise RuntimeError(f"Failed to initialize static GTFS data: {e}") from e
+
     yield
     # Clean up resources if needed on shutdown (optional)
-    print("Application shutting down.")
+    print("Clearing static GTFS cache...") # pragma: no cover
+    static_gtfs.clear_cache() # Clear pandas cache on shutdown
+    print("Application shutting down.") # pragma: no cover
 
 # Pass lifespan to FastAPI app
 app = FastAPI(lifespan=lifespan)
@@ -97,6 +119,6 @@ async def get_feed_json(feed: str, request: Request, mta: MTAClient = Depends(ge
         raise
     except Exception as e:
         # Log the exception details for debugging
-        print(f"Unhandled exception in get_feed_json for feed '{feed}': {e}")
+        print(f"Unhandled exception in get_feed_json for feed '{feed}': {e}") # pragma: no cover
         # Consider logging traceback: import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"An internal error occurred: {e}")

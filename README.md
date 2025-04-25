@@ -8,15 +8,6 @@
 
 A FastAPI-based backend and Python package for working with the MTA's real-time subway and LIRR GTFS-RT data feeds. This project fetches, parses, and exposes real-time feeds as human-readable JSON, including stop names and (for LIRR) route names. You can use it as an HTTP API or as a Python library in your own projects.
 
-## Features
-- Proxies and parses the MTA GTFS-RT feeds for all major subway lines and LIRR
-- Converts all Unix timestamps to ISO 8601 strings for easy reading
-- Adds `stop_name` (from stops.txt or stops-lirr.txt) alongside every `stop_id`
-- For LIRR, adds `route_long_name` (from routes-lirr.txt) alongside every `route_id`
-- Unified endpoint: `/subway/{feed}/json` (see below for all supported feeds)
-- Ready for extension to other lines or custom endpoints
-- **Usable as a Python package:** import and use MTAClient or other utilities in your own code
-
 ## Supported Feeds
 - `ace` (A, C, E)
 - `bdfm` (B, D, F, M)
@@ -36,11 +27,39 @@ Install using pip:
 pip install nyctrains
 ```
 
+## Static GTFS Data
+
+This package relies on static GTFS data files being present in the `resources/` directory for full functionality (e.g., adding stop names, route details).
+
+Required files:
+- `resources/stops.txt` (NYC Subway + LIRR stops)
+- `resources/routes.txt` (NYC Subway + LIRR routes)
+- `resources/trips.txt`
+- `resources/stop_times.txt`
+
+*Note: The simple mappings for LIRR stop names (`stops-lirr.txt`) and route names (`routes-lirr.txt`) used in earlier versions have been replaced by the requirement for the full static GTFS files.* You can typically download these files from the MTA developer resources page.
+
+The application loads these files into pandas DataFrames at startup using the `nyctrains.static_gtfs` module.
+
 ## Usage
 
 This package provides Python tools and a FastAPI backend for working with MTA GTFS-RT subway and LIRR data. **No API key is required** to use the package or access the feeds.
 
-### Example: Fetching a GTFS Feed
+### Running the API Server
+
+```sh
+# Make sure you have the static GTFS files in ./resources/
+uvicorn nyctrains.main:app --reload
+```
+
+Access the API documentation at `http://127.0.0.1:8000/docs`.
+
+Make requests to the feed endpoint, e.g.:
+`http://127.0.0.1:8000/subway/ace/json`
+
+### Using as a Library
+
+#### Example: Fetching a GTFS Feed
 
 ```python
 from nyctrains.mta_client import MTAClient
@@ -50,48 +69,25 @@ client = MTAClient()
 feed_path = "nyct%2Fgtfs-ace"  # Example feed
 
 data = asyncio.run(client.get_gtfs_feed(feed_path))
+# data contains the raw protobuf bytes
 print(f"Feed data length: {len(data)} bytes")
 ```
 
-### Example: Visualizing Subway Feed Data
-
-You can use `matplotlib` and `pandas` to visualize GTFS-RT feed data. Below is a simple example that counts and plots the number of train trip updates in a feed:
+#### Example: Loading Static GTFS Data
 
 ```python
-import asyncio
-import pandas as pd
-import matplotlib.pyplot as plt
-from nyctrains.mta_client import MTAClient
-from google.transit import gtfs_realtime_pb2
-from protobuf3_to_dict import protobuf_to_dict, dict_to_protobuf
+from nyctrains import static_gtfs
 
-client = MTAClient()
-feed_path = "nyct%2Fgtfs-ace"
+# Load static data (caches results)
+stops_df = static_gtfs.get_stops()
+routes_df = static_gtfs.get_routes()
 
-def parse_trip_updates(feed_bytes):
-    feed = gtfs_realtime_pb2.FeedMessage()
-    feed.ParseFromString(feed_bytes)
-    feed_dict = protobuf_to_dict(feed)
-    trip_updates = [e for e in feed_dict['entity'] if 'trip_update' in e]
-    return trip_updates
-
-# Fetch and parse feed
-data = asyncio.run(client.get_gtfs_feed(feed_path))
-trip_updates = parse_trip_updates(data)
-
-# Convert to DataFrame for analysis
-trip_ids = [tu['trip_update']['trip']['trip_id'] for tu in trip_updates]
-df = pd.DataFrame({"trip_id": trip_ids})
-
-# Plot number of unique trips
-plt.figure(figsize=(8, 4))
-df["trip_id"].value_counts().plot(kind="bar")
-plt.title("Number of Trip Updates per Trip ID")
-plt.xlabel("Trip ID")
-plt.ylabel("Update Count")
-plt.tight_layout()
-plt.show()
+if stops_df is not None:
+    print(f"Loaded {len(stops_df)} stops.")
+if routes_df is not None:
+    print(f"Loaded {len(routes_df)} routes.")
 ```
+
 ## Example Output
 ```json
 {
@@ -122,9 +118,3 @@ plt.show()
   ]
 }
 ```
-
-## Data Resources
-- All static mapping files are in the `resources/` directory:
-  - `resources/stops.txt` (NYC Subway stops)
-  - `resources/stops-lirr.txt` (LIRR stops)
-  - `resources/routes-lirr.txt` (LIRR route names)
